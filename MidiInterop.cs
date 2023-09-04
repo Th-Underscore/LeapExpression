@@ -61,8 +61,15 @@ public static class MidiInterop
     //     public uint dwSupport;
     // }
 
-	// NotePressed state for Leap Motion tracking
-	public static Boolean NotePressed;
+	// Leap Motion handle variables
+
+	/// <summary>
+	/// NotePressed state for Leap Motion tracking
+	/// </summary>
+	public static bool NotePressed;
+
+	// MIDI handle variables
+	static MidiPassThrough midiPassThrough;
 
 	// MIDI API Callback Delegate
 	private delegate void MidiInProc(IntPtr handle, int message, IntPtr instance, IntPtr param1, IntPtr param2);
@@ -75,33 +82,18 @@ public static class MidiInterop
 
 		// Set Note Pressed state to true if event is Note On
 		NotePressed = ((param1 & 0xF0) == 0x90);
-		Console.Out.WriteLine($"is Note Pressed: ${NotePressed}");
+		Console.Out.WriteLine($"is Note On: {NotePressed}");
 
 		// Reflect the MIDI event to the output device
-		IntPtr outputHandle;
-		int result = midiOutOpen(out outputHandle, currentOutputDeviceID, IntPtr.Zero, IntPtr.Zero, 0);
-
 		Console.Out.WriteLine($"current output device: {currentOutputDeviceID}");
 
-		if (result == MMSYSERR_NOERROR)
+		Console.Out.WriteLine($"outputHandle: {outputHandle} | message: {message}");
+		
+		int result = midiOutShortMsg(outputHandle, (int)param1);
+		Console.Out.WriteLine($"new result: {result}");
+		if (result != MMSYSERR_NOERROR)
 		{
-			Console.Out.WriteLine($"result: {result} | outputHandle: {outputHandle} | message: {message}");
-			result = midiOutShortMsg(outputHandle, (int)param1);
-			Console.Out.WriteLine($"new result: {result}");
-			if (result != MMSYSERR_NOERROR)
-			{
-				Console.Out.WriteLine("Failed to send MIDI event to output device. Error code: {0}", result);
-			}
-
-			result = midiOutClose(outputHandle);
-			if (result != MMSYSERR_NOERROR)
-			{
-				Console.Out.WriteLine("Failed to close output device. Error code: {0}", result);
-			}
-		}
-		else
-		{
-			Console.Out.WriteLine("Failed to open output device. Error code: {0}", result);
+			Console.Out.WriteLine("Failed to send MIDI event to output device. Error code: {0}", result);
 		}
 	}
 
@@ -110,47 +102,99 @@ public static class MidiInterop
     /// </summary>
 	public static void ReflectMidiInput()
 	{
-		var inputDeviceID = currentInputDeviceID;
-		Console.Out.WriteLine($"ReflectMidiInput() current reflected input device: {inputDeviceID}");
+		midiPassThrough = new MidiPassThrough();        
+		
+		Console.Out.WriteLine($"ReflectMidiInput() current reflected input device: {currentInputDeviceID}");
 
-		IntPtr inputHandle;
+		Console.Out.WriteLine($"is MMSYSERR_NOERROR (0) | deviceID {(int)inputHandle}");
 
-		int result = midiInOpen(out inputHandle, (inputDeviceID > 0) ? inputDeviceID : 0, Marshal.GetFunctionPointerForDelegate<MidiInProc>(MidiInCallback), IntPtr.Zero, CALLBACK_FUNCTION);
-		if (result == MMSYSERR_NOERROR)
+		midiPassThrough.StartMidiInput();
+
+		Console.Out.WriteLine("Receiving MIDI events. Change input/output to stop...");
+
+		// Task.Run(() => 
+		// {
+		pauseReflectingEvent = new AutoResetEvent(false);
+		isReflecting = true;
+		pauseReflectingEvent.WaitOne();
+
+		midiPassThrough.CloseMidiOutput();
+		
+		midiPassThrough.StopMidiInput();
+		midiPassThrough.CloseMidiInput();
+		// });
+	}
+
+	public static IntPtr inputHandle;
+	public static IntPtr outputHandle;
+
+	public class MidiPassThrough {
+		public MidiPassThrough()
 		{
-			Console.Out.WriteLine($"is MMSYSERR_NOERROR (0) | deviceID {(int)inputHandle}");
-			result = midiInStart(inputHandle);
+			OpenMidiInput();
+			OpenMidiOutput();
+		}
+
+		public void OpenMidiInput()
+		{
+			int result = midiInOpen(out inputHandle, currentInputDeviceID, Marshal.GetFunctionPointerForDelegate<MidiInProc>(MidiInCallback), IntPtr.Zero, CALLBACK_FUNCTION);
 			if (result != MMSYSERR_NOERROR)
 			{
-				Console.Out.WriteLine("Failed to start MIDI input. Error code: {0}", result);
-			}
-
-			Console.Out.WriteLine("Receiving MIDI events. Change input/output to stop...");
-            isReflecting = new AutoResetEvent(false);
-            isReflecting.WaitOne();
-
-			result = midiInStop(inputHandle);
-			if (result != MMSYSERR_NOERROR)
-			{
-				Console.Out.WriteLine("Failed to stop MIDI input. Error code: {0}", result);
-			}
-
-			result = midiInClose(inputHandle);
-			if (result != MMSYSERR_NOERROR)
-			{
-				Console.Out.WriteLine("Failed to close MIDI input. Error code: {0}", result);
+				Console.Error.WriteLine("Failed to open MIDI input. Error code: {0}");
 			}
 		}
-		else
+
+		public void OpenMidiOutput()
 		{
-			Console.Out.WriteLine("Failed to open MIDI input. Error code: {0}", result);
+			int result = midiOutOpen(out outputHandle, currentOutputDeviceID, IntPtr.Zero, IntPtr.Zero, 0);
+			if (result != MMSYSERR_NOERROR)
+			{
+				Console.Error.WriteLine("Failed to open MIDI output. Error code: {0}");
+			}
+		}
+
+		public void StartMidiInput()
+		{
+			int result = midiInStart(inputHandle);
+			if (result != MMSYSERR_NOERROR)
+			{
+				Console.Error.WriteLine("Failed to start MIDI input. Error code: {0}");
+			}
+		}
+
+		public void CloseMidiInput()
+		{
+			int result = midiInClose(inputHandle);
+			if (result != MMSYSERR_NOERROR)
+			{
+				Console.Error.WriteLine("Failed to close MIDI input. Error code: {0}");
+			}
+		}
+
+		public void CloseMidiOutput()
+		{
+			int result = midiOutClose(outputHandle);
+			if (result != MMSYSERR_NOERROR)
+			{
+				Console.Error.WriteLine("Failed to close MIDI output. Error code: {0}");
+			}
+		}
+
+		public void StopMidiInput()
+		{
+			int result = midiInStop(inputHandle);
+			if (result != MMSYSERR_NOERROR)
+			{
+				Console.Error.WriteLine("Failed to stop MIDI input. Error code: {0}");
+			}
 		}
 	}
 
 	/// <summary>
     /// Wait event for reflecting MIDI input to output
     /// </summary>
-    public static AutoResetEvent isReflecting;
+    public static AutoResetEvent pauseReflectingEvent;
+	public static bool isReflecting;
 
 	/// <summary>
     /// ID/Index of current MIDI input device
