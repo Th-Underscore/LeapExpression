@@ -1,6 +1,8 @@
 using System;
 using System.Runtime.InteropServices;
 
+namespace LeapExpression;
+
 public static class MidiInterop
 {
 	// MIDI API Constants
@@ -135,6 +137,9 @@ public static class MidiInterop
 			OpenMidiOutput();
 		}
 
+		/// <summary>
+		/// Open MIDI input to the current selected input device.
+		/// </summary>
 		public void OpenMidiInput()
 		{
 			int result = midiInOpen(out inputHandle, currentInputDeviceID, Marshal.GetFunctionPointerForDelegate<MidiInProc>(MidiInCallback), IntPtr.Zero, CALLBACK_FUNCTION);
@@ -144,6 +149,9 @@ public static class MidiInterop
 			}
 		}
 
+		/// <summary>
+		/// Open MIDI output to the current selected output device.
+		/// </summary>
 		public void OpenMidiOutput()
 		{
 			int result = midiOutOpen(out outputHandle, currentOutputDeviceID, IntPtr.Zero, IntPtr.Zero, 0);
@@ -153,6 +161,9 @@ public static class MidiInterop
 			}
 		}
 
+		/// <summary>
+		/// Start handling MIDI input of the current selected input device.
+		/// </summary>
 		public void StartMidiInput()
 		{
 			int result = midiInStart(inputHandle);
@@ -162,6 +173,9 @@ public static class MidiInterop
 			}
 		}
 
+		/// <summary>
+		/// Close MIDI input of the current selected input device.
+		/// </summary>
 		public void CloseMidiInput()
 		{
 			int result = midiInClose(inputHandle);
@@ -171,6 +185,9 @@ public static class MidiInterop
 			}
 		}
 
+		/// <summary>
+		/// Close MIDI output of the current selected output device.
+		/// </summary>
 		public void CloseMidiOutput()
 		{
 			int result = midiOutClose(outputHandle);

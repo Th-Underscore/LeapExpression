@@ -43,55 +43,23 @@ static class LeapMotionHandle
 			, 14335)
 		, 2048);
 
-		Console.Out.WriteLine($"pitch bend value: {pitchBendValue} | lastLocation {lastLocation.x} | x {x} | calc {(int)(8192 + 16383 * (lastLocation.x - x))}");
+		// Create the MIDI message bytes
+		byte statusByte = 0xE0; // Pitch Bend status byte
+		byte lsbByte = (byte)(pitchBendValue & 0x7F); // Least Significant 7 bits
+		byte msbByte = (byte)((pitchBendValue >> 7) & 0x7F); // Most Significant 7 bits
 
-		// IntPtr outputHandle;
-		// int result = midiOutOpen(out outputHandle, MidiInterop.currentOutputDeviceID, IntPtr.Zero, IntPtr.Zero, 0);
+		int message = (statusByte | (msbByte << 8) | (lsbByte << 16));
 
-		// // Console.Out.WriteLine($"current output device: {currentOutputDeviceID}");
+		Console.Out.WriteLine($"value {pitchBendValue} | lsb {lsbByte} | msb {msbByte} | msg {message}");
 
-		// if (result == MMSYSERR_NOERROR)
-		// {
-		// 	// Find Vector offset from lastLocation
-		// 	int pitchBendValue = (int)(8192 + 8192 * (lastLocation.x - x));
+		// Send the MIDI message
+		int result = midiOutShortMsg(MidiInterop.outputHandle, message);
 
-		// 	// Console.Out.WriteLine($"pitch bend value: {pitchBendValue}");
+		if (result != MMSYSERR_NOERROR)
+		{
+			Console.Out.WriteLine($"Failed to send MIDI event to output device. Error code: {0}", result);
+		}
 
-		// 	// Calculate the LSB and MSB values
-		// 	int lsb = pitchBendValue & 0x7F;
-		// 	int msb = (pitchBendValue >> 7) & 0x7F;
-
-		// 	// Console.Out.WriteLine($"lsb {lsb} | msb {msb}");
-
-		// 	// Construct the MIDI message
-		// 	int message = (MIDI_STATUS_PITCH_BEND << 4) | 1;
-		// 	message |= lsb << 8;
-		// 	message |= msb << 16;
-
-		// 	// Console.Out.WriteLine($"result: {result} | outputHandle: {outputHandle} | message: {message}");
-		// 	result = midiOutShortMsg(outputHandle, message);
-		// 	// Console.Out.WriteLine($"new result: {result}");
-		// 	if (result != MMSYSERR_NOERROR)
-		// 	{
-		// 		Console.Out.WriteLine("Failed to send MIDI event to output device. Error code: {0}", result);
-		// 	}
-
-		// 	result = midiOutClose(outputHandle);
-		// 	if (result != MMSYSERR_NOERROR)
-		// 	{
-		// 		Console.Out.WriteLine("Failed to close output device. Error code: {0}", result);
-		// 	}
-
-		// 	return message;
-		// }
-		// else
-		// {
-		// 	Console.Out.WriteLine("Failed to open output device. Error code: {0}", result);
-		// }
 		return pitchBendValue;
     }
-
-    // static Leap.Vector ResetLocation() {
-    //     return new Leap.Vector();
-    // }
 }

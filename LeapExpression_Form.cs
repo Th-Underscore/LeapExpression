@@ -56,7 +56,10 @@ public partial class MainWindow : Form
 
 		// tbValue.Text = mLeftRight.ToString();
 
-		tbValue.Text = LeapMotionHandle.SendMotionCC(mLeftRight, e.msState.fValue[(int)Controller.Motions.mForwardBack], e.msState.fValue[(int)Controller.Motions.mDistance]).ToString();
+		if (MidiInterop.isReflecting)
+		{
+			tbValue.Text = LeapMotionHandle.SendMotionCC(mLeftRight, e.msState.fValue[(int)Controller.Motions.mForwardBack], e.msState.fValue[(int)Controller.Motions.mDistance]).ToString();
+		}
 
 		if (MidiInterop.NotePressed)
 		{
@@ -86,6 +89,9 @@ public partial class MainWindow : Form
 	/// </summary>
 	private void MidiInputsComboBox_DropDownUpdate(object sender, System.EventArgs e)
 	{
+		MidiInterop.isReflecting = false;
+		MidiInterop.pauseReflectingEvent.Set();
+
 		Dictionary<String, MidiInputDevice> inputDevices = helper.GetMidiDevices(MidiDevice.Inputs);
 		var midiInput = MidiInputComboBox.SelectedItem.ToString();
         var midiDevice = inputDevices[midiInput];
@@ -93,9 +99,8 @@ public partial class MainWindow : Form
 		Console.Out.WriteLine($"selected input device: {midiInput} = {midiDevice.Name} | Index: {midiDevice.Index}");
 
 		MidiInterop.currentInputDeviceID = midiDevice.Index;
-
-		MidiInterop.isReflecting.Set();
 	}
+
 	/// <summary>
 	/// Update MIDI input dropdown menu on open.
 	/// </summary>
@@ -113,7 +118,11 @@ public partial class MainWindow : Form
 	/// <summary>
 	/// Get MIDI output dropdown result.
 	/// </summary>
-	private void MidiOutputsComboBox_DropDownUpdate(object sender, System.EventArgs e) {
+	private void MidiOutputsComboBox_DropDownUpdate(object sender, System.EventArgs e)
+	{
+		MidiInterop.isReflecting = false;
+		MidiInterop.pauseReflectingEvent.Set();
+
 		var midiOutput = MidiOutputComboBox.SelectedItem.ToString();
 		Dictionary<String, MidiOutputDevice> outputDevices = helper.GetMidiDevices(MidiDevice.Outputs);
 		var midiDevice = outputDevices[midiOutput];
@@ -121,14 +130,13 @@ public partial class MainWindow : Form
 		Console.Out.WriteLine($"selected output device: {midiOutput} = {midiDevice.Name} | Index: {midiDevice.Index}");
 
 		MidiInterop.currentOutputDeviceID = midiDevice.Index;
-
-		MidiInterop.isReflecting.Set();
 	}
 
 	/// <summary>
 	/// Retrieve MIDI input device.
 	/// </summary>
 	public String GetMidiInputDevice() => MidiInputComboBox.Text;
+	
 	/// <summary>
 	/// Retrieve MIDI output device.
 	/// </summary>
