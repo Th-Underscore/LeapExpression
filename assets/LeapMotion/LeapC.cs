@@ -453,6 +453,13 @@ namespace LeapInternal {
 	eLeapDroppedFrameType_Other
   };
 
+  public enum eLeapTrackingMode : uint {
+	eLeapTrackingMode_Desktop,
+	eLeapTrackingMode_HMD,
+	eLeapTrackingMode_ScreenTop,
+	eLeapTrackingMode_Unknown
+  };
+
   //Note the following LeapC structs are just IntPtrs in C#:
   // LEAP_CONNECTION is an IntPtr
   // LEAP_DEVICE is an IntPtr
@@ -877,6 +884,9 @@ namespace LeapInternal {
 
 	[DllImport("LeapC", EntryPoint = "LeapRequestConfigValue")]
 	public static extern eLeapRS RequestConfigValue(IntPtr hConnection, string name, out UInt32 request_id);
+
+	[DllImport("LeapC", EntryPoint = "LeapSetTrackingMode")]
+	public static extern eLeapRS LeapSetTrackingMode(IntPtr hConnection, eLeapTrackingMode mode);
 
 	public static eLeapRS SaveConfigValue(IntPtr hConnection, string key, bool value, out UInt32 requestId) {
 	  LEAP_VARIANT_VALUE_TYPE valueStruct = new LEAP_VARIANT_VALUE_TYPE(); //This is a C# approximation of a C union

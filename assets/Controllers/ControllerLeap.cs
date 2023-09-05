@@ -269,7 +269,8 @@ namespace LeapExpression
 				lmc.SetPolicy(LeapMotion.PolicyFlag.POLICY_BACKGROUND_FRAMES);
 				lmc.SetPolicy(LeapMotion.PolicyFlag.POLICY_ALLOW_PAUSE_RESUME);
 
-				lmc.ClearPolicy(LeapMotion.PolicyFlag.POLICY_OPTIMIZE_HMD); // NOT head mounted
+				lmc.SetPolicy(LeapMotion.PolicyFlag.POLICY_OPTIMIZE_HMD); // YES head mounted
+				
 				lmc.ClearPolicy(LeapMotion.PolicyFlag.POLICY_IMAGES);	   // NO images, please
 
 				// Subscribe to connected/not messages
