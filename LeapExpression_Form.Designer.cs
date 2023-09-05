@@ -43,7 +43,7 @@ partial class MainWindow
 		components = new System.ComponentModel.Container();
 		AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 		ClientSize = new System.Drawing.Size(800, 450);
-		Text = "Mark's LE";
+		Text = "LeapExpression";
 
 		tbValue = new System.Windows.Forms.TextBox();
 		tbValue.Location = new System.Drawing.Point(50, 50);
@@ -70,7 +70,7 @@ partial class MainWindow
 
 		this.Controls.Add(MidiInputComboBox);
 		this.Controls.Add(MidiOutputComboBox);
-		}
+	}
 
 	#endregion
 }

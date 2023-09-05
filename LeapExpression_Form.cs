@@ -16,8 +16,11 @@ public partial class MainWindow : Form
 		clMyLeap = new ControllerLeap();
 		clMyLeap.MotionEvent += HandleMotionEvent;
 
-		/// MIDI Devices Dropdown
+		// Leap Motion Program Constants
+		Program.leapMotionHandle = new LeapMotionHandle();
+		Program.lastLocation = new LeapMotionHandle.LastLocation();
 
+		// MIDI Devices Dropdown
 		// Inputs
 		String[] midiInputDevices = MidiDevice.Inputs.Where(x => x != null)
 													 .Select(x => x.Name)
@@ -58,15 +61,19 @@ public partial class MainWindow : Form
 
 		if (MidiInterop.isReflecting)
 		{
-			tbValue.Text = LeapMotionHandle.SendMotionCC(mLeftRight, e.msState.fValue[(int)Controller.Motions.mForwardBack], e.msState.fValue[(int)Controller.Motions.mDistance]).ToString();
+			tbValue.Text = Program.leapMotionHandle.SendMotionCC(mLeftRight, e.msState.fValue[(int)Controller.Motions.mForwardBack], e.msState.fValue[(int)Controller.Motions.mDistance]).ToString();
 		}
 
 		if (MidiInterop.NotePressed)
 		{
 			Console.Out.WriteLine($"Note Pressed At: ${mLeftRight}");
-			LeapMotionHandle.lastLocation.x = mLeftRight;
+			Program.lastLocation.x = mLeftRight;
+
+			// Give time to adjust hand
+			System.Threading.Thread.Sleep(20);
+
 			MidiInterop.NotePressed = false;
-			Console.Out.WriteLine($"Last Location Set");
+			Console.Out.WriteLine($"Last Location Set ${Program.lastLocation.x}");
 		}
 	}
 
@@ -98,7 +105,7 @@ public partial class MainWindow : Form
 
 		Console.Out.WriteLine($"selected input device: {midiInput} = {midiDevice.Name} | Index: {midiDevice.Index}");
 
-		MidiInterop.currentInputDeviceID = midiDevice.Index;
+		MidiInterop.inputDeviceID = midiDevice.Index;
 	}
 
 	/// <summary>
@@ -129,7 +136,7 @@ public partial class MainWindow : Form
 
 		Console.Out.WriteLine($"selected output device: {midiOutput} = {midiDevice.Name} | Index: {midiDevice.Index}");
 
-		MidiInterop.currentOutputDeviceID = midiDevice.Index;
+		MidiInterop.outputDeviceID = midiDevice.Index;
 	}
 
 	/// <summary>

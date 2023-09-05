@@ -2,8 +2,12 @@ using System.Runtime.InteropServices;
 
 namespace LeapExpression;
 
-static class LeapMotionHandle
+public class LeapMotionHandle
 {
+	public LeapMotionHandle() {
+
+	}
+
     // MIDI API Constants
 	private const int MMSYSERR_NOERROR = 0;
 	private const int MIDI_STATUS_PITCH_BEND = 0xE0;
@@ -26,9 +30,15 @@ static class LeapMotionHandle
     /// The last location since the last ResetLocation event.
     /// </summary>
     /// <remarks> This is best used for MIDI Note On events to use as a control location for CC values. </remarks>
-    public static Leap.Vector lastLocation;
+    public class LastLocation
+	{
+		public float x { get; set; }
+		public float y { get; set; }
+		public float z { get; set; }
+	};
 
-    public static int SendMotionCC(float x, float y, float z) {
+    public int SendMotionCC(float x, float y, float z)
+	{
 /*
 		Pre-compilation limit calculation:
 		amplification: 16384 * 4 - 1 = 65535
@@ -39,7 +49,7 @@ static class LeapMotionHandle
 		(
 			Math.Min
 			(
-				(int)(8192 + 49152 * (lastLocation.x - x))
+				(int)(8192 + 49152 * (Program.lastLocation.x - x))
 			, 14335)
 		, 2048);
 
@@ -48,16 +58,16 @@ static class LeapMotionHandle
 		byte lsbByte = (byte)(pitchBendValue & 0x7F); // Least Significant 7 bits
 		byte msbByte = (byte)((pitchBendValue >> 7) & 0x7F); // Most Significant 7 bits
 
-		int message = (statusByte | (msbByte << 8) | (lsbByte << 16));
+		int message = (statusByte | (msbByte << 16) | (lsbByte << 8));
 
-		Console.Out.WriteLine($"value {pitchBendValue} | lsb {lsbByte} | msb {msbByte} | msg {message}");
+		Console.Out.WriteLine($"pitch bend value {pitchBendValue}  |  lsb {lsbByte}  |  msb {msbByte}  |  msg {message}");
 
 		// Send the MIDI message
 		int result = midiOutShortMsg(MidiInterop.outputHandle, message);
 
 		if (result != MMSYSERR_NOERROR)
 		{
-			Console.Out.WriteLine($"Failed to send MIDI event to output device. Error code: {0}", result);
+			Console.Out.WriteLine($"Failed to send MIDI event to output device. Error code: {result} | msg {message} | handle {MidiInterop.outputHandle}");
 		}
 
 		return pitchBendValue;
