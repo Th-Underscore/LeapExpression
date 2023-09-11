@@ -70,6 +70,8 @@ public static class MidiInterop
 	/// </summary>
 	public static byte framesSinceNotePressed { get; set; } = 4;
 
+	public static byte waitFrames { get; set; } = 0;
+
 	/// <summary> MIDI API Callback Delegate </summary>
 	private delegate void MidiInProc(IntPtr handle, int message, IntPtr instance, IntPtr param1, IntPtr param2);
 
@@ -82,6 +84,7 @@ public static class MidiInterop
 		// Set Note Pressed state to true if event is Note On
 		if ((param1 & 0xF0) == 0x90) {
 			framesSinceNotePressed = 0;
+			waitFrames = 5; // Plan to make this depend on distance between two notes
 		}
 
 		// Reflect the MIDI event to the output device

@@ -62,7 +62,7 @@ public partial class MainWindow : Form
 			tbValue.Text = Program.leapMotionHandle.SendMotionCC(mLeftRight, e.msState.fValue[(int)Controller.Motions.mForwardBack], e.msState.fValue[(int)Controller.Motions.mDistance]).ToString();
 		}
 
-		if (MidiInterop.framesSinceNotePressed < 5) // If 6 frames have not passed
+		if (MidiInterop.framesSinceNotePressed < MidiInterop.waitFrames) // If set amount of frames have not passed
 		{
 			Console.Out.WriteLine($"Note Pressed At: ${mLeftRight}");
 			Program.lastLocation.x = mLeftRight;
@@ -71,7 +71,7 @@ public partial class MainWindow : Form
 			MidiInterop.framesSinceNotePressed++;
 			Console.Out.WriteLine($"framesSinceNotePressed {MidiInterop.framesSinceNotePressed}");
 
-			if (MidiInterop.framesSinceNotePressed >= 5) { // After 6 frames
+			if (MidiInterop.framesSinceNotePressed >= MidiInterop.waitFrames) { // After set amount of frames
 				Console.Out.WriteLine($"Last Location Set ${Program.lastLocation.x}");
 			}
 		}
