@@ -57,23 +57,23 @@ public partial class MainWindow : Form
 	{
 		var mLeftRight = e.msState.fValue[(int)Controller.Motions.mLeftRight];
 
-		// tbValue.Text = mLeftRight.ToString();
-
 		if (MidiInterop.isReflecting)
 		{
 			tbValue.Text = Program.leapMotionHandle.SendMotionCC(mLeftRight, e.msState.fValue[(int)Controller.Motions.mForwardBack], e.msState.fValue[(int)Controller.Motions.mDistance]).ToString();
 		}
 
-		if (MidiInterop.NotePressed)
+		if (MidiInterop.framesSinceNotePressed < 5) // If 6 frames have not passed
 		{
 			Console.Out.WriteLine($"Note Pressed At: ${mLeftRight}");
 			Program.lastLocation.x = mLeftRight;
 
 			// Give time to adjust hand
-			System.Threading.Thread.Sleep(20);
+			MidiInterop.framesSinceNotePressed++;
+			Console.Out.WriteLine($"framesSinceNotePressed {MidiInterop.framesSinceNotePressed}");
 
-			MidiInterop.NotePressed = false;
-			Console.Out.WriteLine($"Last Location Set ${Program.lastLocation.x}");
+			if (MidiInterop.framesSinceNotePressed >= 5) { // After 6 frames
+				Console.Out.WriteLine($"Last Location Set ${Program.lastLocation.x}");
+			}
 		}
 	}
 
@@ -100,7 +100,7 @@ public partial class MainWindow : Form
 		MidiInterop.pauseReflectingEvent.Set();
 
 		Dictionary<String, MidiInputDevice> inputDevices = helper.GetMidiDevices(MidiDevice.Inputs);
-		var midiInput = MidiInputComboBox.SelectedItem.ToString();
+		var midiInput = MidiInputComboBox.SelectedIndex.ToString();
         var midiDevice = inputDevices[midiInput];
 
 		Console.Out.WriteLine($"selected input device: {midiInput} = {midiDevice.Name} | Index: {midiDevice.Index}");
@@ -130,7 +130,7 @@ public partial class MainWindow : Form
 		MidiInterop.isReflecting = false;
 		MidiInterop.pauseReflectingEvent.Set();
 
-		var midiOutput = MidiOutputComboBox.SelectedItem.ToString();
+		var midiOutput = MidiOutputComboBox.SelectedIndex.ToString();
 		Dictionary<String, MidiOutputDevice> outputDevices = helper.GetMidiDevices(MidiDevice.Outputs);
 		var midiDevice = outputDevices[midiOutput];
 

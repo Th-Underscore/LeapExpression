@@ -66,9 +66,9 @@ public static class MidiInterop
 	// Leap Motion handle variables
 
 	/// <summary>
-	/// Note On state for Leap Motion tracking.
+	/// Number of frames since Note On event (4 = passed)
 	/// </summary>
-	public static bool NotePressed { get; set; }
+	public static byte framesSinceNotePressed { get; set; } = 4;
 
 	/// <summary> MIDI API Callback Delegate </summary>
 	private delegate void MidiInProc(IntPtr handle, int message, IntPtr instance, IntPtr param1, IntPtr param2);
@@ -76,13 +76,17 @@ public static class MidiInterop
 	/// <summary> MIDI Input Callback Function </summary>
 	private static void MidiInCallback(IntPtr handle, int message, IntPtr instance, IntPtr param1, IntPtr param2)
 	{
-		// Set Note Pressed state to true if event is Note On
-		NotePressed = ((param1 & 0xF0) == 0x90);
+		// Stop if current instance has stopped outputting in other thread
+		if (!isReflecting) { return; }
 
-		Console.Out.WriteLine($"outputHandle {outputHandle}");
+		// Set Note Pressed state to true if event is Note On
+		if ((param1 & 0xF0) == 0x90) {
+			framesSinceNotePressed = 0;
+		}
 
 		// Reflect the MIDI event to the output device
 		int result = midiOutShortMsg(outputHandle, (int)param1);
+		Console.Out.WriteLine($"midiOut {inputHandle}---{(int)param1} -> {outputHandle}");
 		if (result != MMSYSERR_NOERROR)
 		{
 			Console.Out.WriteLine("Failed to send MIDI event to output device. Error code: {0} | msg {1}", result, param1);
@@ -218,6 +222,10 @@ public static class MidiInterop
     /// Wait event for reflecting MIDI input to output
     /// </summary>
     public static AutoResetEvent pauseReflectingEvent;
+	/// <summary>
+	/// If reflecting input to output in current instance of MidiInterop.
+	/// </summary>
+	/// <remarks> This is just a global state for now; the class is static. </remarks>
 	public static bool isReflecting;
 
 	/// <summary>

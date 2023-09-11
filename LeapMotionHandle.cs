@@ -60,7 +60,7 @@ public class LeapMotionHandle
 
 		int message = (statusByte | (msbByte << 16) | (lsbByte << 8));
 
-		Console.Out.WriteLine($"pitch bend value {pitchBendValue}  |  lsb {lsbByte}  |  msb {msbByte}  |  msg {message}");
+		//Console.Out.WriteLine($"pitch bend value {pitchBendValue}  |  lsb {lsbByte}  |  msb {msbByte}  |  msg {message}");
 
 		// Send the MIDI message
 		int result = midiOutShortMsg(MidiInterop.outputHandle, message);
