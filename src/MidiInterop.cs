@@ -66,10 +66,18 @@ public static class MidiInterop
 	// Leap Motion handle variables
 
 	/// <summary>
-	/// Number of frames since Note On event (4 = passed)
+	/// The last MIDI note pressed
+	/// </summary>
+	private static nint notePressed { get; set; } = 0;
+
+	/// <summary>
+	/// Number of frames since last Note On event (default 6 = passed)
 	/// </summary>
 	public static byte framesSinceNotePressed { get; set; } = 4;
 
+	/// <summary>
+	/// Number of frames to wait since last Note On event
+	/// </summary>
 	public static byte waitFrames { get; set; } = 0;
 
 	/// <summary> MIDI API Callback Delegate </summary>
@@ -82,14 +90,22 @@ public static class MidiInterop
 		if (!isReflecting) { return; }
 
 		// Set Note Pressed state to true if event is Note On
-		if ((param1 & 0xF0) == 0x90) {
-			framesSinceNotePressed = 0;
+		if ((param1 & 0xF0) == 0x90)
+		{
+			nint currentNote = param1 & 0x0FF;
+			Console.Out.WriteLine($"notePressed {notePressed} | currentNote {currentNote} | difference {notePressed - currentNote}");
+
 			waitFrames = 5; // Plan to make this depend on distance between two notes
+
+			framesSinceNotePressed = 0;
+
+			notePressed = currentNote;
+			Console.Out.WriteLine($"waitFrames {waitFrames} | framesSinceNotePressed {framesSinceNotePressed} | notePressed {notePressed}");
 		}
 
 		// Reflect the MIDI event to the output device
 		int result = midiOutShortMsg(outputHandle, (int)param1);
-		Console.Out.WriteLine($"midiOut {inputHandle}---{(int)param1} -> {outputHandle}");
+		Console.Out.WriteLine($"midiOut {inputHandle}---[{(int)param1}] -> {outputHandle}");
 		if (result != MMSYSERR_NOERROR)
 		{
 			Console.Out.WriteLine("Failed to send MIDI event to output device. Error code: {0} | msg {1}", result, param1);
